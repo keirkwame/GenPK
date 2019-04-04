@@ -157,6 +157,7 @@ int main(int argc, char* argv[])
       for(type=0;type<N_TYPE;type++){
           npart_total[type]=snap->GetNpart(type);
           mass[type] = snap->GetHeader().mass[type];
+          mass[0] = 0; //Hack to force gas particles to be read
       }
       //Get the header and print out some useful things
     box=snap->GetHeader().BoxSize;
