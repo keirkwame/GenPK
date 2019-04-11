@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
       for(type=0;type<N_TYPE;type++){
           npart_total[type]=snap->GetNpart(type);
           mass[type] = snap->GetHeader().mass[type];
-          mass[0] = 0; //Hack to force gas particles to be read
+          //mass[0] = 0; //Hack to force gas particles to be read
       }
       //Get the header and print out some useful things
     box=snap->GetHeader().BoxSize;
@@ -166,6 +166,9 @@ int main(int argc, char* argv[])
     printf("Masses=[%g %g %g ]\n",snap->GetHeader().mass[0],snap->GetHeader().mass[1],snap->GetHeader().mass[2]);
     printf("redshift=%g, Ω_M=%g\n",snap->GetHeader().redshift,snap->GetHeader().Omega0);
   }
+
+  mass[0] = 0; //Hack to force gas particles to be read
+
   //Work out how large a field we need
   for(type=0;type<N_TYPE;type++){
     int64_t tmp=2*nexttwo(cbrt(npart_total[type]));
