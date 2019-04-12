@@ -116,6 +116,13 @@ int read_fieldize_bigfile(GENFLOAT * field, const char *fname, int type, double 
   //Do the final summation here to avoid fp roundoff
   *total_mass += mass[type]*npart_all[type];
   fieldize(box,field_dims,field,npart_all[type],positions, (GENPK_FLOAT_TYPE *)massarray.data, mass[type], 1);
+
+  //Calculate (un-normalised) real-space flux
+   if(type == 0){
+        for(int i=0; i<(field_dims * field_dims * (field_dims + 2)); i++)
+            printf("Element number %i = %e\n", i, field[i]);
+  }
+
   free(positions);
   free(massarray.data);
   return 0;
