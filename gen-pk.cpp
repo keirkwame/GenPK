@@ -61,6 +61,9 @@
 /** Maximal size of FFT grid.
  * In practice 1024 means we need just over 4GB, as sizeof(float)=4*/
 #define FIELD_DIMS 3072L
+#define KVAL(n) ((n)<=field_dims/2 ? (n) : ((n)-field_dims))
+
+extern double invwindow(int64_t kx, int64_t ky, int64_t kz, int64_t n);
 
 using namespace GadgetReader;
 using namespace std;
@@ -237,15 +240,42 @@ int main(int argc, char* argv[])
           fftw_execute(pl);
 
           /*Calculate (un-normalised) real-space flux*/
+          if(type == 0){
           //Correct for window function on density field in Fourier space
+          for(int64_t i=0; i<field_dims; i++){
+           int64_t idx_i = i * field_dims * (field_dims / 2 + 1);
+           for(int64_t j=0; j<field_dims; j++){
+            int64_t idx_j = j * (field_dims / 2 + 1);
+            for(int64_t k=0; k<(field_dims / 2 + 1); k++){
+             int64_t idx = idx_i + idx_j + k;
+             GENFLOAT invwindow_eval = invwindow(KVAL(i), KVAL(j), KVAL(k), field_dims);
+             outfield[idx][0] *= invwindow_eval;
+             outfield[idx][1] *= invwindow_eval;
+            }
+           }
+          }
           //FFT back to real space
-          printf("FFT density field back to real space\n");
-          //pl_c2r = fftw_plan_dft_c2r_3d(field_dims, field_dims, field_dims, &outfield[0], field, FFTW_ESTIMATE);
-          //fftw_execute(pl_c2r);
+          printf("FFT density field (corrected for window function) back to real space\n");
+          fftw_plan pl_c2r;
+          pl_c2r = fftw_plan_dft_c2r_3d(field_dims, field_dims, field_dims, &outfield[0], field, FFTW_ESTIMATE);
+          fftw_execute(pl_c2r);
           //Transform to real-space flux
+          for(int64_t i=0; i<field_dims; i++){
+           int64_t idx_i = i * field_dims * (field_dims / 2 + 1) * 2;
+           for(int64_t j=0; j<field_dims; j++){
+            int64_t idx_j = j * (field_dims / 2 + 1) * 2;
+            for(int64_t k=0; k<field_dims; k++){
+             int64_t idx = idx_i + idx_j + k;
+             //Divide by field_dims**3 for normalisation
+             field[idx] = field[idx] / pow(field_dims, 3);
+             //field[idx] = exp(-1.0 * field[idx] * 1.0e+3 / pow(field_dims, 3)) / 1.0e+3; //Hack to correct for mean flux
+            }
+           }
+          }
           //FFT back to Fourier space for power spectrum calculation
           printf("FFT real-space flux field back to Fourier space\n");
-          //fftw_execute(pl); //Should be field_dims**3 normalisation
+          fftw_execute(pl);
+          }
 
           if(powerspectrum(field_dims,outfield, outfield, nrbins, power,count,keffs, total_mass, total_mass))
                   continue;
