@@ -65,7 +65,7 @@ int powerspectrum(int64_t dims, fftw_complex *outfield, fftw_complex *outfield2,
                                 if (kk > 0) {
                                     int64_t psindex=floor(binsperunit*log(kk));
                                     assert(psindex < nrbins);
-                                    powerpriv[psindex] += (outfield[index][0]*outfield2[index][0]+outfield[index][1]*outfield2[index][1])*pow(invwindow(KVAL(i),KVAL(j),0,dims),2);
+                                    powerpriv[psindex] += (outfield[index][0]*outfield2[index][0]+outfield[index][1]*outfield2[index][1]) * 1.0; //*pow(invwindow(KVAL(i),KVAL(j),0,dims),2);
                                     keffspriv[psindex]+=kk;
                                     countpriv[psindex]++;
                                 }
@@ -74,7 +74,7 @@ int powerspectrum(int64_t dims, fftw_complex *outfield, fftw_complex *outfield2,
                                 kk=sqrt(pow(KVAL(i),2)+pow(KVAL(j),2)+pow(KVAL(dims/2),2));
                                 int64_t psindex=floor(binsperunit*log(kk));
                                 assert(psindex < nrbins);
-                                powerpriv[psindex] += (outfield[index][0]*outfield2[index][0]+outfield[index][1]*outfield2[index][1])*pow(invwindow(KVAL(i),KVAL(j),KVAL(dims/2),dims),2);
+                                powerpriv[psindex] += (outfield[index][0]*outfield2[index][0]+outfield[index][1]*outfield2[index][1]) * 1.0; //*pow(invwindow(KVAL(i),KVAL(j),KVAL(dims/2),dims),2);
                                 keffspriv[psindex]+=kk;
                                 countpriv[psindex]++;
                                 /*Now do the rest. Because of the symmetry, each mode counts twice.*/
@@ -83,7 +83,7 @@ int powerspectrum(int64_t dims, fftw_complex *outfield, fftw_complex *outfield2,
                                         kk=sqrt(pow(KVAL(i),2)+pow(KVAL(j),2)+pow(KVAL(k),2));
                                         int64_t psindex=floor(binsperunit*log(kk));
                                         assert(psindex < nrbins);
-                                        powerpriv[psindex]+=2*(outfield[index][0]*outfield2[index][0]+outfield[index][1]*outfield2[index][1])*pow(invwindow(KVAL(i),KVAL(j),KVAL(k),dims),2);
+                                        powerpriv[psindex]+=2*(outfield[index][0]*outfield2[index][0]+outfield[index][1]*outfield2[index][1]); //*pow(invwindow(KVAL(i),KVAL(j),KVAL(k),dims),2);
                                         countpriv[psindex]+=2;
                                         keffspriv[psindex]+=2*kk;
                                 }

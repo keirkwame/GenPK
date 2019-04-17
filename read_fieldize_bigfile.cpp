@@ -119,20 +119,20 @@ int read_fieldize_bigfile(GENFLOAT * field, const char *fname, int type, double 
   fieldize(box,field_dims,field,npart_all[type],positions, (GENPK_FLOAT_TYPE *)massarray.data, mass[type], 1);
 
   //Calculate (un-normalised) real-space flux
-   if(type == 0){
-        //for(int idx=0; idx<(field_dims * field_dims * (field_dims + 2)); idx++){
-        for(int i=0; i<field_dims; i++){
-         for(int j=0; j<field_dims; j++){
-          for(int k=0; k<field_dims; k++){
-            //    printf("Element number %i = %e\n", i, field[i]);
-            //int i = 1075838976;
-            //printf("Element number %i = %e\n", i, field[i]);
-            int idx = k + (j * (field_dims + 2)) + (i * (field_dims + 2) * field_dims);
-            field[idx] = exp(-1.0 * field[idx] * 1.0e+6);
-          }
-         }
-        }
-  }
+  // if(type == 0){
+  //      //for(int idx=0; idx<(field_dims * field_dims * (field_dims + 2)); idx++){
+  //      for(int i=0; i<field_dims; i++){
+  //       for(int j=0; j<field_dims; j++){
+  //        for(int k=0; k<field_dims; k++){
+  //          //    printf("Element number %i = %e\n", i, field[i]);
+  //          //int i = 1075838976;
+  //          //printf("Element number %i = %e\n", i, field[i]);
+  //          int idx = k + (j * (field_dims + 2)) + (i * (field_dims + 2) * field_dims);
+  //          field[idx] = exp(-1.0 * field[idx] * 1.0e+12);
+  //        }
+  //       }
+  //      }
+  //}
 
   free(positions);
   free(massarray.data);

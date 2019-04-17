@@ -235,6 +235,18 @@ int main(int argc, char* argv[])
           }
           printf("total_mass in type %d = %g\n", type, total_mass);
           fftw_execute(pl);
+
+          /*Calculate (un-normalised) real-space flux*/
+          //Correct for window function on density field in Fourier space
+          //FFT back to real space
+          printf("FFT density field back to real space\n");
+          //pl_c2r = fftw_plan_dft_c2r_3d(field_dims, field_dims, field_dims, &outfield[0], field, FFTW_ESTIMATE);
+          //fftw_execute(pl_c2r);
+          //Transform to real-space flux
+          //FFT back to Fourier space for power spectrum calculation
+          printf("FFT real-space flux field back to Fourier space\n");
+          //fftw_execute(pl); //Should be field_dims**3 normalisation
+
           if(powerspectrum(field_dims,outfield, outfield, nrbins, power,count,keffs, total_mass, total_mass))
                   continue;
           filename=outdir;
