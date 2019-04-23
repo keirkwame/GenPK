@@ -267,7 +267,7 @@ int main(int argc, char* argv[])
             for(int64_t k=0; k<field_dims; k++){
              int64_t idx = idx_i + idx_j + k;
              //Divide by field_dims**3 for normalisation
-             field[idx] = field[idx] / pow(field_dims, 3);
+             field[idx] = field[idx] * 1.01995e-5 * 0.76 / pow(field_dims, 3); //Should read gas particle mass & maybe hydrogen fraction (GFM_metals)
              //field[idx] = exp(-1.0 * field[idx] * 1.0e+3 / pow(field_dims, 3)) / 1.0e+3; //Hack to correct for mean flux
             }
            }
