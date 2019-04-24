@@ -271,9 +271,10 @@ int main(int argc, char* argv[])
              int64_t idx = idx_i + idx_j + k;
              //Divide by field_dims**3 for normalisation
              field[idx] = field[idx] / pow(field_dims, 3); //1.01995e-5 * 1. / pow(field_dims, 3); //Should read gas particle mass & maybe hydrogen fraction (GFM_metals)
-             //field[idx] = exp(-1.0 * field[idx] * 1.0e+3 / pow(field_dims, 3)) / 1.0e+3; //Hack to correct for mean flux
+             field[idx] = exp(-1.0 * field[idx]); //Hack to correct for mean flux
             }
            }
+           printf("%i %e\n", i, field[idx])
           }
           //FFT back to Fourier space for power spectrum calculation
           printf("FFT real-space flux field back to Fourier space\n");
