@@ -94,8 +94,8 @@ int read_fieldize_bigfile(GENFLOAT * field, const char *fname, int type, double 
   /* Load particle masses, if present  */
    if(mass[type] == 0){
         double total_mass_this_file=0;
-        snprintf(name,32,"%d/Mass",type);
-        //snprintf(name,32,"%d/NeutralHydrogenFraction",type); //Hack to give mass for neutral hydrogen (un-normalised)
+        //snprintf(name,32,"%d/Mass",type);
+        snprintf(name,32,"%d/NeutralHydrogenFraction",type); //Hack to give mass for neutral hydrogen (un-normalised)
         if(0 != big_file_open_block(&bf, &bb, name)) {
             fprintf(stderr,"Failed to open block at %s:%s\n", name,
                   big_file_get_error_message());
@@ -107,7 +107,7 @@ int read_fieldize_bigfile(GENFLOAT * field, const char *fname, int type, double 
         }
         for(int i = 0; i<npart_all[type]; i++)
             {
-            total_mass_this_file += ((float *)massarray.data)[i] * 2.0;
+            total_mass_this_file += ((float *)massarray.data)[i]; //* 2.0;
             }
         *total_mass += total_mass_this_file;
         if(big_block_close(&bb) ||

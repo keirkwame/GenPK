@@ -251,6 +251,9 @@ int main(int argc, char* argv[])
              GENFLOAT invwindow_eval = invwindow(KVAL(i), KVAL(j), KVAL(k), field_dims);
              outfield[idx][0] *= invwindow_eval;
              outfield[idx][1] *= invwindow_eval;
+             //Shot noise
+             //outfield[idx][0] -= total_mass / pow(512, 1.5)
+             //outfield[idx][0] -= total_mass / pow(512, 1.5)
             }
            }
           }
