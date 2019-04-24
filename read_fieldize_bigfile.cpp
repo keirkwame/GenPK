@@ -106,7 +106,9 @@ int read_fieldize_bigfile(GENFLOAT * field, const char *fname, int type, double 
             return 1;
         }
         for(int i = 0; i<npart_all[type]; i++)
-            total_mass_this_file += ((float *)massarray.data)[i];
+            {
+            total_mass_this_file += ((float *)massarray.data)[i] * 2.0;
+            }
         *total_mass += total_mass_this_file;
         if(big_block_close(&bb) ||
               big_file_close(&bf)) {

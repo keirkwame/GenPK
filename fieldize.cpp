@@ -60,7 +60,7 @@ int fieldize(double boxsize, int dims, GENFLOAT *out, int64_t segment_particles,
             GENFLOAT dx[3],tx[3], x[3];
             int fx[3],nex[3];
             /* This is one over density.*/
-            const GENFLOAT invrho = (masses ? masses[index+k] : mass);
+            const GENFLOAT invrho = (masses ? masses[index+k] * 2.0 : mass);
             for(int i=0; i<3; i++)
             {
                 x[i]=positions[3*(index+k)+i]*units;
@@ -129,5 +129,5 @@ GENFLOAT invwindow(int64_t kx, int64_t ky, int64_t kz, int64_t n)
     float iwx = onedinvwindow(kx, n);
     float iwy = onedinvwindow(ky, n);
     float iwz = onedinvwindow(kz, n);
-    return pow(iwx*iwy*iwz,2);
+    return pow(iwx*iwy*iwz,1);
 }
