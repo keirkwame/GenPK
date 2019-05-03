@@ -30,6 +30,12 @@
 //This is the type for internal computations
 #define GENFLOAT double
 
+/*Calculates the scaling for the mean flux.
+ * tau is an array of optical depths,
+ * nbins is the total number of points in this array.
+ * obs_flux is the value to scale the mean to.*/
+double mean_flux(GENFLOAT * tau, int64_t field_dims, double obs_flux, double tol);
+
 /** Returns the next power of two greater than its argument*/
 int nexttwo(int);
 

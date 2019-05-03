@@ -57,6 +57,7 @@
 #warning "You are compiling with OpenMP disabled (probably Apple clang). This will be slow! Try installing gcc."
 #endif
 #include <stdlib.h>
+#include <stdio.h>
 
 /** Maximal size of FFT grid.
  * In practice 1024 means we need just over 4GB, as sizeof(float)=4*/
@@ -68,6 +69,49 @@ extern double invwindow(int64_t kx, int64_t ky, int64_t kz, int64_t n);
 using namespace GadgetReader;
 using namespace std;
 
+/*Calculates the scaling for the mean flux.
+ * tau is an array of optical depths,
+ * nbins is the total number of points in this array.
+ * obs_flux is the value to scale the mean to.*/
+double mean_flux(GENFLOAT* tau, int64_t field_dims, double obs_flux, double tol)
+{
+    double mean_flux;
+    double tau_mean_flux;
+    double scale, newscale=100;
+    //double obs_flux_bins=obs_flux*nbins;
+    double obs_flux_bins=obs_flux*pow(field_dims, 3);
+    double temp;
+    //int i;
+    do{
+         scale=newscale;
+         mean_flux=0;
+         tau_mean_flux=0;
+         //for(i=0; i< nbins; i++)
+         //{
+         //    temp=exp(-scale*tau[i]);
+         //    mean_flux+=temp;
+         //    tau_mean_flux+=temp*tau[i];
+         //}
+         for(int64_t i=0; i<field_dims; i++){
+          int64_t idx_i = i * field_dims * (field_dims / 2 + 1) * 2;
+          for(int64_t j=0; j<field_dims; j++){
+           int64_t idx_j = j * (field_dims / 2 + 1) * 2;
+           for(int64_t k=0; k<field_dims; k++){
+            int64_t idx = idx_i + idx_j + k;
+            temp=exp(-scale*tau[idx]);
+            mean_flux+=temp;
+            tau_mean_flux+=temp*tau[idx];
+           }
+          }
+         }
+         newscale=scale+(mean_flux-obs_flux_bins)/tau_mean_flux;
+         /*We don't want the absorption to change sign and become emission;
+          * 0 is too far. */
+         if(newscale < 0)
+                 newscale=0;
+    }while(fabs(newscale-scale) > tol*newscale);
+    return newscale;
+}
 
 /** \file
  * File containing main() */
@@ -274,6 +318,9 @@ int main(int argc, char* argv[])
           fftw_plan pl_c2r;
           pl_c2r = fftw_plan_dft_c2r_3d(field_dims, field_dims, field_dims, &outfield2[0], field2, FFTW_ESTIMATE); //field2
           fftw_execute(pl_c2r);
+          //Rescale to desired mean flux
+          double optical_depth_scaling = mean_flux(field2, field_dims, 0.7, 1.0e-5);
+          printf("Optical depth scaling factor = %e\n", optical_depth_scaling);
           //Transform to real-space flux
           for(int64_t i=0; i<field_dims; i++){
            int64_t idx_i = i * field_dims * (field_dims / 2 + 1) * 2;
@@ -287,8 +334,8 @@ int main(int argc, char* argv[])
              // field2[idx] = field[idx];
              //}
              //else {
-             field2[idx] = field2[idx] / pow(field_dims, 3); //1.01995e-5 * 1. / pow(field_dims, 3); //Should read gas particle mass & maybe hydrogen fraction (GFM_metals)
-             field2[idx] = exp(-1.0 * field2[idx] * 1.0e+6); //Hack to correct for mean flux
+             //field2[idx] = field2[idx]; / pow(field_dims, 3); //1.01995e-5 * 1. / pow(field_dims, 3); //Should read gas particle mass & maybe hydrogen fraction (GFM_metals)
+             field2[idx] = exp(-1.0 * field2[idx] * optical_depth_scaling) //1.0e+6); //Hack to correct for mean flux
              //}
             }
            }
