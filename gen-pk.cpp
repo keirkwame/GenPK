@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 {
   int64_t field_dims=0;
   int type;
-  GENFLOAT *field;
+  GENFLOAT *field, *field2; //field2
   double *power, *keffs;
   int *count;
   int64_t npart_total[N_TYPE];
@@ -95,6 +95,7 @@ int main(int argc, char* argv[])
   bool use_bigfile = false;
   fftw_plan pl;
   fftw_complex *outfield;
+  fftw_complex *outfield2; //field2
   while((c = getopt(argc, argv, "i:j:o:c:s:h")) !=-1){
     switch(c){
         case 'o':
@@ -174,7 +175,9 @@ int main(int argc, char* argv[])
 
   //Work out how large a field we need
   for(type=0;type<N_TYPE;type++){
+    //Increase field size
     int64_t tmp=2*nexttwo(cbrt(npart_total[type]));
+    //int64_t tmp=2048; //pow(npart_total[type], 1.3);
     field_dims=std::max(field_dims, std::min(tmp, FIELD_DIMS));
   }
   const int nrbins=field_dims;
@@ -186,10 +189,19 @@ int main(int argc, char* argv[])
   	fprintf(stderr,"Error allocating memory for field\n");
   	return 1;
   }
+
+  //field2
+  if(!(field2=(GENFLOAT *)fftw_malloc(field_size*sizeof(GENFLOAT)))){
+        fprintf(stderr,"Error allocating memory for field2\n");
+        return 1;
+  }
+  memset(field2, 0, field_size*sizeof(GENFLOAT));
+
   string filename=outdir;
   size_t last=infiles.find_last_of("/\\");
   //Set up FFTW
   outfield=(fftw_complex *) &field[0];
+  outfield2 = (fftw_complex *) &field2[0]; //field2
   if(!fftw_init_threads()){
   		  fprintf(stderr,"Error initialising fftw threads\n");
   		  return 0;
@@ -249,8 +261,8 @@ int main(int argc, char* argv[])
             for(int64_t k=0; k<(field_dims / 2 + 1); k++){
              int64_t idx = idx_i + idx_j + k;
              GENFLOAT invwindow_eval = invwindow(KVAL(i), KVAL(j), KVAL(k), field_dims);
-             outfield[idx][0] *= invwindow_eval;
-             outfield[idx][1] *= invwindow_eval;
+             outfield2[idx][0] = outfield[idx][0]; //* invwindow_eval;
+             outfield2[idx][1] = outfield[idx][1]; //* invwindow_eval;
              //Shot noise
              //outfield[idx][0] -= total_mass / pow(512, 1.5)
              //outfield[idx][0] -= total_mass / pow(512, 1.5)
@@ -260,29 +272,41 @@ int main(int argc, char* argv[])
           //FFT back to real space
           printf("FFT density field (corrected for window function) back to real space\n");
           fftw_plan pl_c2r;
-          pl_c2r = fftw_plan_dft_c2r_3d(field_dims, field_dims, field_dims, &outfield[0], field, FFTW_ESTIMATE);
+          pl_c2r = fftw_plan_dft_c2r_3d(field_dims, field_dims, field_dims, &outfield2[0], field2, FFTW_ESTIMATE); //field2
           fftw_execute(pl_c2r);
           //Transform to real-space flux
           for(int64_t i=0; i<field_dims; i++){
            int64_t idx_i = i * field_dims * (field_dims / 2 + 1) * 2;
+           printf("Before exponentiation: %li %e\n", idx_i, field2[idx_i] / pow(field_dims, 3));
            for(int64_t j=0; j<field_dims; j++){
             int64_t idx_j = j * (field_dims / 2 + 1) * 2;
             for(int64_t k=0; k<field_dims; k++){
              int64_t idx = idx_i + idx_j + k;
              //Divide by field_dims**3 for normalisation
-             field[idx] = field[idx] / pow(field_dims, 3); //1.01995e-5 * 1. / pow(field_dims, 3); //Should read gas particle mass & maybe hydrogen fraction (GFM_metals)
-             field[idx] = exp(-1.0 * field[idx]); //Hack to correct for mean flux
+             //if(field[idx] < 1.0e-100){
+             // field2[idx] = field[idx];
+             //}
+             //else {
+             field2[idx] = field2[idx] / pow(field_dims, 3); //1.01995e-5 * 1. / pow(field_dims, 3); //Should read gas particle mass & maybe hydrogen fraction (GFM_metals)
+             field2[idx] = exp(-1.0 * field2[idx] * 1.0e+6); //Hack to correct for mean flux
+             //}
             }
            }
-           printf("%i %e\n", i, field[idx])
+           printf("%li %e\n", idx_i, field2[idx_i]);
           }
           //FFT back to Fourier space for power spectrum calculation
-          printf("FFT real-space flux field back to Fourier space\n");
-          fftw_execute(pl);
-          }
+          printf("\nFFT real-space flux field back to Fourier space\n");
+          fftw_plan pl2; //field2
+          pl2 = fftw_plan_dft_r2c_3d(field_dims,field_dims,field_dims,&field2[0],outfield2, FFTW_ESTIMATE);
+          fftw_execute(pl2);
 
+          if(powerspectrum(field_dims,outfield2, outfield2, nrbins, power,count,keffs, total_mass, total_mass))
+                  continue;
+          } else {
           if(powerspectrum(field_dims,outfield, outfield, nrbins, power,count,keffs, total_mass, total_mass))
                   continue;
+          }
+
           filename=outdir;
           filename+="/PK-"+type_str(type)+"-"+infiles.substr(last+1);
           print_pk(filename,nrbins,keffs,power,count);
@@ -411,7 +435,10 @@ int main(int argc, char* argv[])
   free(count);
   free(keffs);
   fftw_free(field);
+  fftw_free(field2); //field2
   fftw_destroy_plan(pl);
+  //fftw_destroy_plan(pl2);
+  //fftw_destroy_plan(pl_c2r);
   return 0;
 }
 
