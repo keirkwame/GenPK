@@ -322,6 +322,7 @@ int main(int argc, char* argv[])
           double optical_depth_scaling = mean_flux(field2, field_dims, 0.7, 1.0e-5);
           printf("Optical depth scaling factor = %e\n", optical_depth_scaling);
           //Transform to real-space flux
+          GENFLOAT mean_flux = 0.0;
           for(int64_t i=0; i<field_dims; i++){
            int64_t idx_i = i * field_dims * (field_dims / 2 + 1) * 2;
            printf("Before exponentiation: %li %e\n", idx_i, field2[idx_i] / pow(field_dims, 3));
@@ -335,12 +336,15 @@ int main(int argc, char* argv[])
              //}
              //else {
              //field2[idx] = field2[idx]; / pow(field_dims, 3); //1.01995e-5 * 1. / pow(field_dims, 3); //Should read gas particle mass & maybe hydrogen fraction (GFM_metals)
-             field2[idx] = exp(-1.0 * field2[idx] * optical_depth_scaling) //1.0e+6); //Hack to correct for mean flux
+             field2[idx] = exp(-1.0 * field2[idx] * optical_depth_scaling); //1.0e+6); //Hack to correct for mean flux
+             mean_flux += field2[idx];
              //}
             }
            }
            printf("%li %e\n", idx_i, field2[idx_i]);
           }
+          mean_flux /= pow(field_dims, 3);
+          printf("Mean flux = %e\n", mean_flux);
           //FFT back to Fourier space for power spectrum calculation
           printf("\nFFT real-space flux field back to Fourier space\n");
           fftw_plan pl2; //field2
