@@ -14,7 +14,7 @@ if __name__ == "__main__":
     power_spectrum_filename = sys.argv[1] #'/Users/kwame/Simulations/emulator/HighRes512/snapdir_011/PK-by-PART_003' #1-1024-norm'
     box_length_kpc_h = float(sys.argv[2]) #10000. #* u.kpc
     hubble = float(sys.argv[3]) #0.6724
-    plot_flag = bool(sys.argv[4])
+    plot_flag = bool(int(sys.argv[4]))
 
     power_spectrum_file = np.loadtxt(power_spectrum_filename)
     k = power_spectrum_file[:, 0] * 2. * np.pi * hubble / box_length_kpc_h
