@@ -220,8 +220,8 @@ int main(int argc, char* argv[])
   //Work out how large a field we need
   for(type=0;type<N_TYPE;type++){
     //Increase field size
-    int64_t tmp=2*nexttwo(cbrt(npart_total[type]));
-    //int64_t tmp=2048; //pow(npart_total[type], 1.3);
+    //int64_t tmp=2*nexttwo(cbrt(npart_total[type]));
+    int64_t tmp=768; //pow(npart_total[type], 1.3);
     field_dims=std::max(field_dims, std::min(tmp, FIELD_DIMS));
   }
   const int nrbins=field_dims;
@@ -343,6 +343,7 @@ int main(int argc, char* argv[])
            }
            printf("%li %e\n", idx_i, field2[idx_i]);
           }
+          total_mass = mean_flux;
           mean_flux /= pow(field_dims, 3);
           printf("Mean flux = %e\n", mean_flux);
           //FFT back to Fourier space for power spectrum calculation
