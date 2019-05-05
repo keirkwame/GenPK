@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 {
   int64_t field_dims=0;
   int type;
-  GENFLOAT *field, *field2; //field2
+  GENFLOAT *field; //, *field2; //field2
   double *power, *keffs;
   int *count;
   int64_t npart_total[N_TYPE];
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
   bool use_bigfile = false;
   fftw_plan pl;
   fftw_complex *outfield;
-  fftw_complex *outfield2; //field2
+  //fftw_complex *outfield2; //field2
   while((c = getopt(argc, argv, "i:j:o:c:s:h")) !=-1){
     switch(c){
         case 'o':
@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
     printf("redshift=%g, Ω_M=%g\n",snap->GetHeader().redshift,snap->GetHeader().Omega0);
   }
 
-  mass[0] = 0; //Hack to force gas particles to be read
+  //mass[0] = 0; //Hack to force gas particles to be read
 
   //Work out how large a field we need
   for(type=0;type<N_TYPE;type++){
@@ -235,17 +235,17 @@ int main(int argc, char* argv[])
   }
 
   //field2
-  if(!(field2=(GENFLOAT *)fftw_malloc(field_size*sizeof(GENFLOAT)))){
+  /*if(!(field2=(GENFLOAT *)fftw_malloc(field_size*sizeof(GENFLOAT)))){
         fprintf(stderr,"Error allocating memory for field2\n");
         return 1;
   }
-  memset(field2, 0, field_size*sizeof(GENFLOAT));
+  memset(field2, 0, field_size*sizeof(GENFLOAT));*/
 
   string filename=outdir;
   size_t last=infiles.find_last_of("/\\");
   //Set up FFTW
   outfield=(fftw_complex *) &field[0];
-  outfield2 = (fftw_complex *) &field2[0]; //field2
+  //outfield2 = (fftw_complex *) &field2[0]; //field2
   if(!fftw_init_threads()){
   		  fprintf(stderr,"Error initialising fftw threads\n");
   		  return 0;
@@ -293,11 +293,11 @@ int main(int argc, char* argv[])
               }
           }
           printf("total_mass in type %d = %g\n", type, total_mass);
-          fftw_execute(pl);
+          //fftw_execute(pl);
 
           /*Calculate (un-normalised) real-space flux*/
           if(type == 0){
-          //Correct for window function on density field in Fourier space
+          /*//Correct for window function on density field in Fourier space
           for(int64_t i=0; i<field_dims; i++){
            int64_t idx_i = i * field_dims * (field_dims / 2 + 1);
            for(int64_t j=0; j<field_dims; j++){
@@ -317,15 +317,15 @@ int main(int argc, char* argv[])
           printf("FFT density field (corrected for window function) back to real space\n");
           fftw_plan pl_c2r;
           pl_c2r = fftw_plan_dft_c2r_3d(field_dims, field_dims, field_dims, &outfield2[0], field2, FFTW_ESTIMATE); //field2
-          fftw_execute(pl_c2r);
+          fftw_execute(pl_c2r);*/
           //Rescale to desired mean flux
-          double optical_depth_scaling = mean_flux(field2, field_dims, 0.7, 1.0e-5);
+          double optical_depth_scaling = mean_flux(field, field_dims, 0.7, 1.0e-5);
           printf("Optical depth scaling factor = %e\n", optical_depth_scaling);
           //Transform to real-space flux
           GENFLOAT mean_flux = 0.0;
           for(int64_t i=0; i<field_dims; i++){
            int64_t idx_i = i * field_dims * (field_dims / 2 + 1) * 2;
-           printf("Before exponentiation: %li %e\n", idx_i, field2[idx_i] / pow(field_dims, 3));
+           //printf("Before exponentiation: %li %e\n", idx_i, field2[idx_i] / pow(field_dims, 3));
            for(int64_t j=0; j<field_dims; j++){
             int64_t idx_j = j * (field_dims / 2 + 1) * 2;
             for(int64_t k=0; k<field_dims; k++){
@@ -336,28 +336,30 @@ int main(int argc, char* argv[])
              //}
              //else {
              //field2[idx] = field2[idx]; / pow(field_dims, 3); //1.01995e-5 * 1. / pow(field_dims, 3); //Should read gas particle mass & maybe hydrogen fraction (GFM_metals)
-             field2[idx] = exp(-1.0 * field2[idx] * optical_depth_scaling); //1.0e+6); //Hack to correct for mean flux
-             mean_flux += field2[idx];
+             field[idx] = exp(-1.0 * field[idx] * optical_depth_scaling); //1.0e+6); //Hack to correct for mean flux
+             mean_flux += field[idx];
              //}
             }
            }
-           printf("%li %e\n", idx_i, field2[idx_i]);
+           //printf("%li %e\n", idx_i, field2[idx_i]);
           }
           total_mass = mean_flux;
           mean_flux /= pow(field_dims, 3);
           printf("Mean flux = %e\n", mean_flux);
           //FFT back to Fourier space for power spectrum calculation
-          printf("\nFFT real-space flux field back to Fourier space\n");
-          fftw_plan pl2; //field2
-          pl2 = fftw_plan_dft_r2c_3d(field_dims,field_dims,field_dims,&field2[0],outfield2, FFTW_ESTIMATE);
-          fftw_execute(pl2);
+          printf("FFT real-space flux field to Fourier space\n");
+          /*fftw_plan pl; //field
+          pl2 = fftw_plan_dft_r2c_3d(field_dims,field_dims,field_dims,&field2[0],outfield2, FFTW_ESTIMATE);*/
+          }
 
-          if(powerspectrum(field_dims,outfield2, outfield2, nrbins, power,count,keffs, total_mass, total_mass))
+          fftw_execute(pl);
+
+          /*if(powerspectrum(field_dims,outfield2, outfield2, nrbins, power,count,keffs, total_mass, total_mass))
                   continue;
-          } else {
+          } else {*/
           if(powerspectrum(field_dims,outfield, outfield, nrbins, power,count,keffs, total_mass, total_mass))
                   continue;
-          }
+          //}
 
           filename=outdir;
           filename+="/PK-"+type_str(type)+"-"+infiles.substr(last+1);
@@ -487,7 +489,7 @@ int main(int argc, char* argv[])
   free(count);
   free(keffs);
   fftw_free(field);
-  fftw_free(field2); //field2
+  //fftw_free(field2); //field2
   fftw_destroy_plan(pl);
   //fftw_destroy_plan(pl2);
   //fftw_destroy_plan(pl_c2r);

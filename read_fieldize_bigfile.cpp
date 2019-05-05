@@ -92,10 +92,13 @@ int read_fieldize_bigfile(GENFLOAT * field, const char *fname, int type, double 
   free(pos.data);
   BigArray massarray = {0};
   /* Load particle masses, if present  */
-   if(mass[type] == 0){
+   if((mass[type] == 0) || (type == 0)){
         double total_mass_this_file=0;
-        //snprintf(name,32,"%d/Mass",type);
-        snprintf(name,32,"%d/NeutralHydrogenFraction",type); //Hack to give mass for neutral hydrogen (un-normalised)
+        if(mass[type] == 0){
+            snprintf(name,32,"%d/Mass",type);
+        } else {
+            snprintf(name,32,"%d/NeutralHydrogenFraction",type); //Get neutral hydrogen fraction
+        }
         if(0 != big_file_open_block(&bf, &bb, name)) {
             fprintf(stderr,"Failed to open block at %s:%s\n", name,
                   big_file_get_error_message());
@@ -121,7 +124,7 @@ int read_fieldize_bigfile(GENFLOAT * field, const char *fname, int type, double 
   fieldize(box,field_dims,field,npart_all[type],positions, (GENPK_FLOAT_TYPE *)massarray.data, mass[type], 1);
 
   //Calculate (un-normalised) real-space flux
-   if(type == 0){
+  /* if(type == 0){
         //for(int idx=0; idx<(field_dims * field_dims * (field_dims + 2)); idx++){
         for(int i=0; i<field_dims; i++){
          int idx = i * (field_dims + 2) * field_dims;
@@ -136,7 +139,7 @@ int read_fieldize_bigfile(GENFLOAT * field, const char *fname, int type, double 
          }
          printf("From fieldize: %i %e\n", idx, field[idx]);
         }
-  }
+  }*/
 
   free(positions);
   free(massarray.data);
