@@ -319,7 +319,8 @@ int main(int argc, char* argv[])
           pl_c2r = fftw_plan_dft_c2r_3d(field_dims, field_dims, field_dims, &outfield2[0], field2, FFTW_ESTIMATE); //field2
           fftw_execute(pl_c2r);*/
           //Rescale to desired mean flux
-          double optical_depth_scaling = mean_flux(field, field_dims, 0.7, 1.0e-5);
+          //double optical_depth_scaling = mean_flux(field, field_dims, 0.7, 1.0e-5);
+          double optical_depth_scaling = 3.044508e+06;
           printf("Optical depth scaling factor = %e\n", optical_depth_scaling);
           //Transform to real-space flux
           GENFLOAT mean_flux = 0.0;
