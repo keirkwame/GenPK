@@ -20,9 +20,10 @@ if __name__ == "__main__":
     k = power_spectrum_file[:, 0] * 2. * np.pi * hubble / box_length_kpc_h
     power_spectrum_dimensionless = ((power_spectrum_file[:, 0] * 1.) ** 3) * power_spectrum_file[:, 1]
 
-    k_cut = 200. * 2. * np.pi * hubble / box_length_kpc_h #60. / 1000.
+    k_cut = 115. * 2. * np.pi * hubble / box_length_kpc_h #60. / 1000.
+    initial_guess = np.array([1.e-3, 0.5, 100.])
     parameter_bounds = (np.array([-np.inf, -np.inf, 0.]), np.inf)
-    optimised_parameters, parameter_covariance = spo.curve_fit(power_spectrum_model, k[k<k_cut], power_spectrum_dimensionless[k<k_cut], bounds=parameter_bounds)
+    optimised_parameters, parameter_covariance = spo.curve_fit(power_spectrum_model, k[k<k_cut], power_spectrum_dimensionless[k<k_cut], p0=initial_guess, bounds=parameter_bounds)
     print('A = %e ckpc; n = %e / ckpc; filtering length = %.2f ckpc'%tuple(optimised_parameters))
     print('Paramater covariance =', parameter_covariance)
 
